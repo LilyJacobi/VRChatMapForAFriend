@@ -1,0 +1,220 @@
+﻿
+using UdonSharp;
+using UnityEngine;
+using VRC.SDKBase;
+using UnityEngine.UI;
+using VRC.Udon;
+
+public class spikes : UdonSharpBehaviour
+{
+    public VRC.SDKBase.VRC_Pickup pickup;
+    public VRC.SDKBase.VRC_Pickup.PickupHand hand;
+    public VRC.SDKBase.VRCPlayerApi player;
+    public VRC.SDKBase.VRCPlayerApi.TrackingDataType  trackerEnum;
+    public VRC.SDKBase.VRCPlayerApi.TrackingData trackerData;
+    public Quaternion quat;
+    public float modifier;
+    public Vector3 currentHandRotation;
+    public float currentHandYRot;
+    public float charge;
+    public Slider chargeBar;
+    public float baseRunSpeed;
+    public float baseWalkSpeed; 
+    public float baseStrafeSpeed; 
+    public bool isTapping;
+    public bool isNeutral;
+    public int[] tappingRangeLeft;
+    public int[] fillingRangeLeft;
+    public int[] tappingRangeRight;
+    public int[] fillingRangeRight;
+    public int[] tappingRange;
+    public int[] fillingRange;
+    public float[] modifierValuesTap;
+    public float[] modifierValuesFill;
+    int handInt;
+    void Start()
+    {
+        
+        tappingRangeLeft = new int[] {270, 360};
+        fillingRangeLeft = new int[] {180,270};
+        tappingRangeRight= new int[] {180,270};
+        fillingRangeRight = new int[] {270, 360};
+
+    }
+    void Update() {
+        if(pickup.IsHeld) {
+            hand = pickup.currentHand;
+            player = pickup.currentPlayer;
+            handInt = (int) hand;
+            trackerEnum = (VRC.SDKBase.VRCPlayerApi.TrackingDataType) handInt;
+            trackerData = player.GetTrackingData(trackerEnum);
+            quat = trackerData.rotation;
+            currentHandRotation = quat.eulerAngles;
+            currentHandYRot = currentHandRotation.z;
+            //Debug.Log(currentHandRotation);
+            if(handInt == 1) {
+                tappingRange = tappingRangeLeft;
+                fillingRange = fillingRangeLeft;
+            }
+            else{
+                tappingRange = tappingRangeRight;
+                fillingRange = fillingRangeRight;
+            }
+            if(currentHandYRot > tappingRange[0] && currentHandYRot <= tappingRange[1]) {
+                isTapping = true;
+            }
+            else if(currentHandYRot >= fillingRange[0] && currentHandYRot < fillingRange[1]) {
+                isTapping = false;
+            }
+            if(pickup.IsHeld && !isNeutral) {
+                if(modifier > 1) {
+                    chargeBar.value -= modifier;
+                }
+                else if( modifier < 1) {
+                    chargeBar.value += (1/modifier);
+                }
+            }
+            //Debug.Log(isTapping);
+            if(chargeBar.value == 0) {
+                player.SetRunSpeed(baseRunSpeed );
+                player.SetWalkSpeed(baseWalkSpeed );
+                player.SetStrafeSpeed(baseStrafeSpeed );
+                isNeutral = true;
+            }
+
+        }
+    }
+    public override void OnPickupUseDown() {
+        if(isTapping) 
+        {
+            Tap();
+        }
+        else {
+            Fill();
+        }
+    }
+    public override void OnDrop() {
+        
+        player.SetRunSpeed(baseRunSpeed );
+        player.SetWalkSpeed(baseWalkSpeed );
+        player.SetStrafeSpeed(baseStrafeSpeed );
+        isNeutral = true;
+    }
+    void Tap() {
+        Debug.Log(currentHandRotation);
+        if(handInt == 1) {
+           if(currentHandYRot >= 270 && currentHandYRot < 285) {
+                modifier = modifierValuesTap[0];
+                isNeutral = true;
+            }
+            else if(currentHandYRot >= 285 && currentHandYRot < 300) {
+                modifier = modifierValuesTap[1];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 300 && currentHandYRot < 315) {
+                modifier = modifierValuesTap[2];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 315 && currentHandYRot < 330) {
+                modifier = modifierValuesTap[3];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 330 && currentHandYRot < 345) {
+                modifier = modifierValuesTap[4];
+                isNeutral = false;
+            }
+            else {
+                modifier = modifierValuesTap[5];
+                isNeutral = false;
+            };
+        }
+        else {
+            if(currentHandYRot >= 255 && currentHandYRot < 270) {
+                modifier = modifierValuesTap[0];
+                isNeutral = true;
+            }
+            else if(currentHandYRot >= 240 && currentHandYRot < 255) {
+                modifier = modifierValuesTap[1];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 225 && currentHandYRot < 240) {
+                modifier = modifierValuesTap[2];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 210 && currentHandYRot < 225) {
+                modifier = modifierValuesTap[3];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 195 && currentHandYRot < 210) {
+                modifier = modifierValuesTap[4];
+                isNeutral = false;
+            }
+            else {
+                modifier = modifierValuesTap[5];
+                isNeutral = false;
+            }
+        }
+        player.SetRunSpeed(baseRunSpeed * modifier);
+        player.SetWalkSpeed(baseWalkSpeed * modifier);
+        player.SetStrafeSpeed(baseStrafeSpeed * modifier);
+    }
+    void Fill() {
+        Debug.Log(currentHandRotation);
+        if(handInt == 2) {
+           if(currentHandYRot >= 270 && currentHandYRot < 285) {
+                modifier = modifierValuesFill[0];
+                isNeutral = true;
+            }
+            else if(currentHandYRot >= 285 && currentHandYRot < 300) {
+                modifier = modifierValuesFill[1];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 300 && currentHandYRot < 315) {
+                modifier = modifierValuesFill[2];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 315 && currentHandYRot < 330) {
+                modifier = modifierValuesFill[3];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 330 && currentHandYRot < 345) {
+                modifier = modifierValuesFill[4];
+                isNeutral = false;
+            }
+            else {
+                modifier = modifierValuesFill[5];
+                isNeutral = false;
+            };
+        }
+        else {
+            if(currentHandYRot >= 255 && currentHandYRot < 270) {
+                modifier = modifierValuesFill[0];
+                isNeutral = true;
+            }
+            else if(currentHandYRot >= 240 && currentHandYRot < 255) {
+                modifier = modifierValuesFill[1];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 225 && currentHandYRot < 240) {
+                modifier = modifierValuesFill[2];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 210 && currentHandYRot < 225) {
+                modifier = modifierValuesFill[3];
+                isNeutral = false;
+            }
+            else if(currentHandYRot >= 195 && currentHandYRot < 210) {
+                modifier = modifierValuesFill[4];
+                isNeutral = false;
+            }
+            else {
+                modifier = modifierValuesFill[5];
+                isNeutral = false;
+            }
+        }
+        Debug.Log(modifier);
+        player.SetRunSpeed(baseRunSpeed * modifier);
+        player.SetWalkSpeed(baseWalkSpeed * modifier);
+        player.SetStrafeSpeed(baseStrafeSpeed * modifier);
+    }
+}
